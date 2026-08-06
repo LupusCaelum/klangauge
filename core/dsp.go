@@ -85,10 +85,34 @@ func noiseFloor(frames []FrameValue) float64 {
 	return sum / float64(n)
 }
 
+// peakLevel, kaydın en yüksek %5 şiddet değerinin ortalamasıdır.
+// "Konuşma zirvesi" olarak kullanılır — sessizlik hissini ayırt etmek için.
+func peakLevel(frames []FrameValue) float64 {
+	sorted := make([]float64, len(frames))
+	for i, f := range frames {
+		sorted[i] = f.Value
+	}
+	sort.Float64s(sorted)
+	n := len(sorted) / 20
+	if n < 1 {
+		n = 1
+	}
+	sum := 0.0
+	for _, v := range sorted[len(sorted)-n:] {
+		sum += v
+	}
+	return sum / float64(n)
+}
+
 // MarkVoiced, her frame'in "sesli" (konuşma içeren) olup olmadığını belirler.
-// Kural: şiddet, gürültü tabanının 12 dB üzerindeyse sesli.
+// İki koşuldan güçlü olanı geçerli eşiktir:
+//   1) gürültü tabanının 12 dB üzeri — sessiz bir kayıtta nefes/zemin hissini ayıklar
+//   2) konuşma zirvesinin 30 dB altı — zemin hissi düşükse bile "sessizlik" sayılmasın.
 func MarkVoiced(frames []FrameValue) []bool {
 	threshold := noiseFloor(frames) + 12
+	if peak := peakLevel(frames); peak-30 > threshold {
+		threshold = peak - 30
+	}
 	voiced := make([]bool, len(frames))
 	for i, f := range frames {
 		voiced[i] = f.Value > threshold
@@ -96,12 +120,50 @@ func MarkVoiced(frames []FrameValue) []bool {
 	return voiced
 }
 
+// smooth, şiddet eğrisini üçgen ağırlıklı pencereyle yumuşatır.
+// Ünsüz atakları (s, f, k…) ve zarf içi mikro dalgalanmalar ayrı hece
+// gibi görünmesin diye tepe tespitinden ÖNCE uygulanır.
+func smooth(vals []float64, radius int) []float64 {
+	if len(vals) < 3 || radius < 1 {
+		return vals
+	}
+	weights := make([]float64, radius*2+1)
+	wsum := 0.0
+	for i := -radius; i <= radius; i++ {
+		w := float64(radius + 1 - abs(i))
+		weights[i+radius] = w
+		wsum += w
+	}
+	out := make([]float64, len(vals))
+	for i := range vals {
+		s := 0.0
+		for j := -radius; j <= radius; j++ {
+			idx := i + j
+			if idx < 0 || idx >= len(vals) {
+				continue
+			}
+			s += vals[idx] * weights[j+radius]
+		}
+		out[i] = s / wsum
+	}
+	return out
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 // DetectSyllables, şiddet eğrisindeki tepeleri bularak her hecenin zamanını
 // ve öne çıkanlığını (prominence) döndürür. Her hecenin bir "enerji tepesi"
 // vardır (a/e/o gibi sesli harflerde ses en güçlüdür).
-// minGap: iki hece arası minimum süre (80ms) — aşırı hızlı konuşmada bile fiziksel sınır.
+// Eğri önce yumuşatılır; böylece ünsüz atakları heceye eklenmez.
+// minGap: iki hece arası minimum süre (120ms) — hızlı konuşmada bile gerçek sınır.
 // minProminence: tepenin iki yanındaki en yüksek "vadi"ye göre öne çıkanlığı (dB).
 func DetectSyllables(times, vals []float64, voiced []bool, minGap, minProminence float64) []Syllable {
+	vals = smooth(vals, 3)
 	var peaks []int
 	for i := 1; i < len(vals)-1; i++ {
 		if !voiced[i] {
@@ -218,7 +280,7 @@ func AnalyzeRhythm(samples []float64, cfg Config) (intensity []FrameValue, voice
 		vals[i] = f.Value
 	}
 
-	syllables = DetectSyllables(times, vals, voiced, 0.08, 1.5)
+	syllables = DetectSyllables(times, vals, voiced, 0.12, 3.0)
 
 	// Sesli süre: her sesli pencere hop/sampleRate saniye katkı verir.
 	// MeanIntensity YALNIZCA sesli frame'lerden hesaplanır — sessizlik
