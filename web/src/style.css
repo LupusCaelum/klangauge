@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0c1310;
+  --color-panel: #121c17;
+  --color-line: #23352c;
+  --color-neon: #00ff9f;
+  --color-cyan: #00e5ff;
+  --color-mag: #ff2ec4;
+  --color-gold: #ffd166;
+  --color-txt: #d8e5de;
+  --color-dim: #728f80;
+  --font-mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", "Fira Code",
+    "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  background: var(--color-ink);
+  color: var(--color-txt);
+  font-family: var(--font-mono);
+}
+
+/* terminal öğesi: yanıp sönen imleç */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.cursor::after {
+  content: "▊";
+  color: var(--color-neon);
+  animation: blink 1s steps(1) infinite;
+}
+
+/* neon parlama yardımcıları */
+.glow-green { text-shadow: 0 0 8px rgba(0, 255, 159, 0.55); }
+.glow-cyan  { text-shadow: 0 0 8px rgba(0, 229, 255, 0.55); }
+.glow-mag   { text-shadow: 0 0 8px rgba(255, 46, 196, 0.55); }
+.glow-box   { box-shadow: 0 0 12px rgba(0, 255, 159, 0.12); }
+
+/* iz çizgisi (scanline) efekti — hafifletildi */
+.scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+/* ince kaydırma çubuğu */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-ink); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-dim); }

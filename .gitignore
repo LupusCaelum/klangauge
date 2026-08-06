@@ -1,0 +1,25 @@
+# Go
+core/*.test
+*.exe
+*.out
+
+# Node / Vite
+node_modules/
+web/node_modules/
+web/dist/
+*.local
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
