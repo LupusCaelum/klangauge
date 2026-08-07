@@ -18,15 +18,11 @@ Canlı: https://lupuscaelum.github.io/klangauge/ · Repo: github.com/LupusCaelum
 
 ## ⚠️ SON OTURUMDAN KALANLAR (açılışta önce bunlar)
 
-1. **Pages deploy yayında DEĞİL — hece düzeltmesi canlıya çıkmadı.**
-   - Son iki `workflow_dispatch` run GitHub'ın hosted runner kıtlığı nedeniyle başarısız oldu:
-     `"The job was not acquired by Runner of type hosted even after multiple attempts"`.
-   - Canlı wasm hâlâ ESKİ: 3442010 bayt, sha256 `530d9bd4...`, last-modified 20:32.
-   - Yerel YENİ wasm: 3445344 bayt, sha256 `5d6e09c5...`.
-   - Yapılacak: `gh workflow run "Deploy to GitHub Pages" --ref main`, sonra
-     `curl -sI https://lupuscaelum.github.io/klangauge/klangauge.wasm` ile
-     size=3445344 ve sha256=`5d6e09c5...` eşleştiğini doğrula.
-   - Not: push-to-main otomatik tetikleme 25c849b'de ÇALIŞMADI (anomali) — manuel dispatch gerekli.
+1. ✅ **Pages deploy tamamlandı (07.08.2026).** Hece düzeltmesi canlıda:
+   canlı wasm = yerel wasm = 3445344 bayt, sha256 `5d6e09c5...`.
+   Ders: push-to-main otomatik tetikleme çalışmıyor (anomali) — manuel
+   `gh workflow run "Deploy to GitHub Pages" --ref main` gerekli; ayrıca GitHub
+   hosted runner kıtlığı yaşanabiliyor, denemeler tekrarlanmalı.
 
 2. **Sonraki konu: beyin fırtınası fikirleri.** Kullanıcı "diğer beyin fırtınasındaki
    fikirlere bakalım" dedi. Fikir notu dosyası bulunamadı — kullanıcıya notun nerede
